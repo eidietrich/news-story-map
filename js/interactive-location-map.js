@@ -140,7 +140,7 @@ var pointListeners = [
 
 d3.queue()
   .defer(d3.json, './data/west-mt-bound.geojson')
-  .defer(d3.json, './data/cities-w-butte.geojson')
+  .defer(d3.json, './data/cities.geojson')
   .defer(d3.csv, './data/mt-stories.csv')
   .awaitAll(function(error, files){
     if (error) throw error;
@@ -163,8 +163,9 @@ function updateInfobox(item=null){
 
   infobox.html('')
   if (item === null) {
-    infobox
-      .html('')
+    infobox.append('div')
+      .attr('class', 'default')
+      .html('Tap or hover to select story by city')
   }
   else {
     var props = item.properties;

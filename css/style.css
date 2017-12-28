@@ -67,6 +67,11 @@ body {
   font-style: italic;
 
 }
+.infobox .default {
+  font-size: 1.1em;
+  line-height: 2em;
+  font-style: italic;
+}
 
 .infobox .byline {
   font-weight: none;

@@ -1,3 +1,3 @@
-# Montana population peaks
+# Story dateline map
 
-Quick-hit interactive map visualization looking at the decade Montana towns and cities reached peak population.
+Simple interactive map intended to show news stories by dateline location. Proof of concept.
