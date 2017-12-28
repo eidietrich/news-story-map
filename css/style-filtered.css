@@ -1,0 +1,62 @@
+#viz-container {
+  margin: auto;
+  width: 820px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+#map {
+  border: 1px solid #444;
+}
+circle.swatch {
+  fill: #666;
+  fill-opacity: 0.4;
+  stroke-width: 1px;
+  stroke: #666;
+}
+.state-boundary {
+  fill: #ccc;
+  stroke: none;
+  stroke-width: 0;
+}
+.highways {
+  fill: none;
+  stroke: #888;
+  opacity: 1;
+  /*stroke-width: 1px;*/
+}
+.counties {
+  fill: none;
+  stroke: #eee;
+  stroke-width: 0.5px;
+  stroke-opacity: 1;
+}
+.city {
+  /*opacity: 0.9;*/
+  /*fill: #2b8cbe;*/
+  /*stroke: #fff;*/
+  fill-opacity: 0.4;
+  stroke-width: 1;
+}
+.city:hover {
+  fill-opacity: 0.8;
+}
+
+.infobox {
+  pointer-events: none;
+}
+
+.infobox rect {
+  fill: #eee;
+  fill-opacity: 0.9;
+  stroke-width: 1px;
+  stroke: #bbb;
+  stroke-opacity: 0.9;
+}
+
+.infobox text {
+  text-anchor: end;
+}
+
+tspan.strong {
+  font-weight: bold;
+}
