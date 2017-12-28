@@ -1,73 +1,139 @@
-/*
-<style>
-  #viz-container {
-    margin-left: 10px;
+
+
+/* Map object */
+
+function Map(anchor, width=400, height=400, margin) {
+  this.anchor = anchor;
+  this.width = width;
+  this.height = height;
+  this.margin = margin;
+
+  this.plotWidth = this.width - this.margin.left - this.margin.right;
+  this.plotHeight = this.height - this.margin.top - this.margin.bottom;
+  console.log(this.plotWidth, this.margin.left, this.margin.right, this.width)
+
+  // // plot margins within svg
+  // this.svg = d3.select(anchor)
+  //   .append('svg')
+  //   .attr("width", width)
+  //   .attr("height", height)
+  // this.plot = this.svg.append('g')
+  //   .attr('transform', 'translate('
+  //   + this.margin.left + ',' + this.margin.top + ')');
+
+  // plot with no margins
+  this.plot = d3.select(anchor)
+    .append('svg')
+    .attr('width', this.plotWidth)
+    .attr('height', this.plotHeight)
+
+  this.projection = d3.geoMercator()
+}
+Map.prototype.setBounds = function(bounding){
+  console.log('setting bounds')
+  if (bounding) { this.boundingObject = bounding; }// Geojson
+  this.projection.fitSize([this.plotWidth, this.plotHeight], this.boundingObject);
+}
+Map.prototype.addShapeLayer = function(features, className='shape'){
+  console.log('shape layer', features)
+  var shapeFunction = d3.geoPath()
+    .projection(this.projection);
+
+  var container = this.plot.append('g')
+    .attr('class', '.feature-container');
+
+  container.selectAll('.' + className)
+    .data(features).enter()
+    .append('path')
+    .attr('d', shapeFunction)
+    .attr('class', className)
+};
+Map.prototype.addPointLayer = function(features, className='point', pointFunction, listeners){
+  console.log('point layer', features);
+
+  function defaultPoint(d){
+    d3.select(this).append('circle')
+    .attr('class', className)
+    .attr('cx', 0)
+    .attr('cy', 0)
+    .attr('r', 10)
   }
-  circle.swatch {
-    fill: #bbb;
-    fill-opacity: 0.2;
-    stroke-width: 1.5px;
-    stroke: #bbb;
+
+  drawPoint = pointFunction || defaultPoint;
+
+  // Create and place point groups
+  var that = this;
+  var points = this.plot.append('g')
+    .attr('class', '.point-container')
+    .selectAll('.' + className)
+    .data(features).enter()
+    .append('g')
+
+
+    .attr('transform', function(d){
+      var xy = that.projection(d.geometry.coordinates[0])
+      return 'translate(' + xy + ')';
+    });
+
+  // Draw points
+  points
+    .each(drawPoint);
+
+  // Add event listeners to points
+  if (listeners !== null) {
+    listeners.forEach(
+      function(d){ points.on(d.event, d.handler)
+    });
   }
-  .county {
-    fill: #eee;
-    stroke: #ddd;
-    border-width: 0.5px;
-  }
-  .city {
-    fill-opacity: 0.1;
-    stroke-width: 1.5;
-  }
-</style>
-*/
+};
+Map.prototype.addTileBasemap = function(tileDirPath){
+    console.log('drawing base map')
+
+    function makeTileUrl(d){
+      // var url = "http://" + "abc"[d[1] % 3] + ".tile.openstreetmap.org/" + d[2] + "/" + d[0] + "/" + d[1] + ".png";
+      var url = tileDirPath + "/" + d[2] + "/" + d[0] + "/" + d[1] + ".png";
+      // console.log(url);
+      return url;
+    }
+
+    var tiles = d3.tile()
+      .size([this.plotWidth, this.plotHeight])
+      .translate(this.projection([0, 0]))
+      .scale(this.projection.scale() * 2 * Math.PI)();
+
+    this.plot.selectAll("image")
+        .data(tiles)
+      .enter().append("image")
+        .attr("xlink:href", makeTileUrl)
+        .attr("x", function(d) { return (d[0] + tiles.translate[0]) * tiles.scale; })
+        .attr("y", function(d) { return (d[1] + tiles.translate[1]) * tiles.scale; })
+        .attr("width", tiles.scale)
+        .attr("height", tiles.scale);
+};
 
 
 /* Graphic code */
-
-var width = 400, height = 400;
+var maxWidth = 500;
+var margin = {top: 10, left: 10, right: 10, bottom: 10};
 
 var viz = d3.select('#viz')
+viz.append('div').attr('id','map')
 
-var svg = viz
-  .append('svg')
-  .attr("width", width)
-  .attr("height", height)
-var margin = {top: 10, left: 10, right: 10, bottom: 10};
-var plotWidth = width - margin.left - margin.right,
-  plotHeight = height - margin.top - margin.bottom;
-var plot = svg.append('g')
-  .attr('transform', 'translate('
-    + margin.left + ',' + margin.top + ')');
+var vizWidth = document.getElementById('map').offsetWidth;
+var width = Math.min(maxWidth, vizWidth) - 2;
+var height = width;
+var map = new Map('#map', width, height, margin)
 
 var infobox = viz
   .append('div')
   .attr('class','infobox')
 
-var projection = d3.geoMercator()
-
-var annotations, makeAnnotations;
-
-// var colors = {
-//   '2010': '#66a61e',
-//   '2000': '#e7298a', '1990': '#e7298a', '1980': '#e7298a',
-//   '1970': '#d95f0e', '1960': '#d95f0e', '1950': '#d95f0e',
-//   '1940': '#e6ab02', '1930': '#e6ab02', '1920': '#e6ab02',
-//   '1910': '#a6761d', '1900': '#a6761d', '1890': '#a6761d'
-// }
-
-// var censusYears = ['2010', '2000', '1990', '1980', '1970', '1960', '1950', '1940', '1930', '1920', '1910', '1900', '1890']
-// var scaleYears = ['2010', '2000', '1970', '1950', '1910', '1890']
-// // var colors = ['#1d91c0',
-// // '#8c2d04','#973b0a','#a14a10','#ab5717','#b6641e','#c07224','#cb7f2b','#d58c32','#df9b39','#eaa840','#f4b647','#fec44f'];
-// var colors = ['#1d91c0',
-// '#78c679','#ffc418','#ff8200','#f8171c','#a52a2a'];
-
-// var rScale = d3.scaleSqrt()
-//   .range([0, 20]);
-
-// var colorScale = d3.scaleLinear()
-//   .range(colors)
-//   .domain(scaleYears)
+var pointListeners = [
+  // Add focus event?
+  {event: 'mouseover', handler: function(d){ updateInfobox(d); }},
+  {event: 'touchstart', handler: function(d){ updateInfobox(d); }},
+  // {event: 'click', handler: function(d){ updateInfobox(); }}
+]
 
 d3.queue()
   .defer(d3.json, './data/west-mt-bound.geojson')
@@ -75,7 +141,7 @@ d3.queue()
   .defer(d3.csv, './data/mt-stories.csv')
   .awaitAll(function(error, files){
     if (error) throw error;
-    console.log('loaded');
+
     var bounding = files[0];
     var cities = files[1];
     var data = files[2];
@@ -83,83 +149,13 @@ d3.queue()
     cities = join(cities, data, 'NAME', 'PLACE');
     cities = clean(cities);
 
-    projection.fitSize([plotWidth, plotHeight], bounding);
-
-    drawBaseMap('./assets/mt-tiles');
-    drawCities(cities.features);
+    map.setBounds(bounding);
+    map.addTileBasemap('./assets/mt-tiles');
+    map.addPointLayer(cities.features, 'city', null, pointListeners)
     updateInfobox();
 
   });
 
-function drawShapes(features, className='shape'){
-  console.log('features', features)
-  var shapes = d3.geoPath()
-    .projection(projection);
-
-  var counties = plot.append('g')
-    .attr('class', '.feature-container');
-
-  counties.selectAll('.' + className)
-    .data(features).enter()
-    .append('path')
-    .attr('d', shapes)
-    .attr('class', className)
-    .on('click', function(d){ console.log(d.properties); })
-}
-
-function drawBaseMap(tileDirPath){
-  // draws basemap using d3-tiles
-  console.log('drawing base map')
-
-  function makeTileUrl(d){
-    // var url = "http://" + "abc"[d[1] % 3] + ".tile.openstreetmap.org/" + d[2] + "/" + d[0] + "/" + d[1] + ".png";
-    var url = tileDirPath + "/" + d[2] + "/" + d[0] + "/" + d[1] + ".png";
-    // console.log(url);
-    return url;
-  }
-
-  var tiles = d3.tile()
-      .size([plotWidth, plotHeight])
-      .translate(projection([0, 0]))
-      .scale(projection.scale() * 2 * Math.PI)();
-
-  plot.selectAll("image")
-      .data(tiles)
-    .enter().append("image")
-      .attr("xlink:href", makeTileUrl)
-      .attr("x", function(d) { return (d[0] + tiles.translate[0]) * tiles.scale; })
-      .attr("y", function(d) { return (d[1] + tiles.translate[1]) * tiles.scale; })
-      .attr("width", tiles.scale)
-      .attr("height", tiles.scale);
-}
-
-function drawCities(points){
-  console.log('cities', points);
-  var cities = plot.append('g')
-    .attr('class', '.city-container')
-    .selectAll('.cities')
-    .data(points).enter()
-    .append('g')
-
-    .attr('transform', function(d){
-      var xy = projection( d.geometry.coordinates[0])
-      return 'translate(' + xy + ')';
-    });
-
-  cities.append('circle')
-    .attr('class', 'city')
-    .attr('cx', 0)
-    .attr('cy', 0)
-    .attr('r', 10)
-
-  cities.on('mouseover', function(d){
-    updateInfobox(d);
-    // return console.log(d.properties.PLACE, d.properties.maxYear)
-  })
-  // cities.on('mouseout', function(d){
-  //   updateInfobox();
-  // })
-}
 function updateInfobox(item=null){
   infobox.html('')
   if (item === null) {
@@ -226,6 +222,32 @@ function updateInfobox(item=null){
 // function calcRate(begin, end, n){
 //   return Math.pow((end / begin), 1 / n) - 1;
 // }
+
+// var annotations, makeAnnotations;
+
+// var colors = {
+//   '2010': '#66a61e',
+//   '2000': '#e7298a', '1990': '#e7298a', '1980': '#e7298a',
+//   '1970': '#d95f0e', '1960': '#d95f0e', '1950': '#d95f0e',
+//   '1940': '#e6ab02', '1930': '#e6ab02', '1920': '#e6ab02',
+//   '1910': '#a6761d', '1900': '#a6761d', '1890': '#a6761d'
+// }
+
+// var censusYears = ['2010', '2000', '1990', '1980', '1970', '1960', '1950', '1940', '1930', '1920', '1910', '1900', '1890']
+// var scaleYears = ['2010', '2000', '1970', '1950', '1910', '1890']
+// // var colors = ['#1d91c0',
+// // '#8c2d04','#973b0a','#a14a10','#ab5717','#b6641e','#c07224','#cb7f2b','#d58c32','#df9b39','#eaa840','#f4b647','#fec44f'];
+// var colors = ['#1d91c0',
+// '#78c679','#ffc418','#ff8200','#f8171c','#a52a2a'];
+
+// var rScale = d3.scaleSqrt()
+//   .range([0, 20]);
+
+// var colorScale = d3.scaleLinear()
+//   .range(colors)
+//   .domain(scaleYears)
+
+/* Data handling */
 
 function join(geojson, data, geoKey, dataKey){
   var included = {
