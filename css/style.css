@@ -18,18 +18,34 @@ body {
   fill: #2b8cbe;
   stroke: #2b8cbe;
   fill-opacity: 0.4;
-  stroke-width: 2;
+  stroke-width:  2;
+
+  transition: all 300ms ease
 }
-.city:hover {
-  fill-opacity: 0.8;
+.city.highlight {
+  /*fill-opacity: 0.8;*/
   transform: scale(1.5);
+  fill: #e6ab02;
+
+  transition: all 300ms ease;
 }
 
 .infobox {
   border: solid 1px #444;
   margin-top: 5px;
   padding: 10px;
-  min-height: 100px;
+  min-height: 150px;
+  background-color: #fff;
+  text-align: center;
+}
+.infobox:hover {
+  background-color: #eee;
+}
+.infobox a {
+  text-decoration: none;
+  color: #111;
+  cursor: pointer;
+  width: 100%;
 }
 
 .infobox .dateline {
@@ -38,15 +54,21 @@ body {
 
 .infobox .headline {
   font-size: 2em;
+  line-height: 1.2em;
   font-weight: bold;
-  font-family: Verdana;
+  font-family: 'Open Sans','Helvetica Neue',Helvetica,Arial,sans-serif;
+  color: #2b8cbe;
+
 }
 
 .infobox .subheadline {
-  font-size: 1.2em;
+  font-size: 1.1em;
+  line-height: 2em;
   font-style: italic;
+
 }
 
 .infobox .byline {
-  font-weight: bold;
+  font-weight: none;
+  color: #666;
 }

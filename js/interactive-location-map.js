@@ -68,8 +68,6 @@ Map.prototype.addPointLayer = function(features, className='point', pointFunctio
     .selectAll('.' + className)
     .data(features).enter()
     .append('g')
-
-
     .attr('transform', function(d){
       var xy = that.projection(d.geometry.coordinates[0])
       return 'translate(' + xy + ')';
@@ -77,6 +75,7 @@ Map.prototype.addPointLayer = function(features, className='point', pointFunctio
 
   // Draw points
   points
+    .attr('class','point-group')
     .each(drawPoint);
 
   // Add event listeners to points
@@ -130,7 +129,11 @@ var infobox = viz
 
 var pointListeners = [
   // Add focus event?
-  {event: 'mouseover', handler: function(d){ updateInfobox(d); }},
+  {event: 'mouseover', handler: function(d){
+    d3.selectAll('.city').classed('highlight', false)
+    d3.select(this).select('.city').classed('highlight', true)
+    updateInfobox(d); }
+  },
   {event: 'touchstart', handler: function(d){ updateInfobox(d); }},
   // {event: 'click', handler: function(d){ updateInfobox(); }}
 ]
@@ -157,22 +160,23 @@ d3.queue()
   });
 
 function updateInfobox(item=null){
+
   infobox.html('')
   if (item === null) {
     infobox
-      .html('<div>This is default fill</div>')
+      .html('')
   }
   else {
     var props = item.properties;
-    infobox.append('div').attr('class', 'dateline')
+    var link = infobox.append('a')
+      .attr('href', props.link)
+      .attr('target','_blank');
+    link.append('div').attr('class', 'dateline')
       .html(props.dateline)
-    infobox.append('div').attr('class','headline')
-        .append('a')
-          .attr('href', props.link)
-          .html(props.headline)
-    infobox.append('div').attr('class','subheadline')
+    link.append('div').attr('class','headline').html(props.headline)
+    link.append('div').attr('class','subheadline')
       .html(props.subhead)
-    infobox.append('div').attr('class','byline')
+    link.append('div').attr('class','byline')
       .html(props.byline + ', ' + props.publication)
   }
 }
