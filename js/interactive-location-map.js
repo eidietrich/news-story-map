@@ -10,7 +10,6 @@ function Map(anchor, width=400, height=400, margin) {
 
   this.plotWidth = this.width - this.margin.left - this.margin.right;
   this.plotHeight = this.height - this.margin.top - this.margin.bottom;
-  console.log(this.plotWidth, this.margin.left, this.margin.right, this.width)
 
   // // plot margins within svg
   // this.svg = d3.select(anchor)
@@ -141,7 +140,7 @@ var pointListeners = [
 d3.queue()
   .defer(d3.json, './data/west-mt-bound.geojson')
   .defer(d3.json, './data/cities.geojson')
-  .defer(d3.csv, './data/mt-stories.csv')
+  .defer(d3.csv, './data/sjn-mt-stories.csv')
   .awaitAll(function(error, files){
     if (error) throw error;
 
@@ -149,8 +148,10 @@ d3.queue()
     var cities = files[1];
     var data = files[2];
 
-    cities = join(cities, data, 'NAME', 'PLACE');
-    cities = clean(cities);
+    cities = process(data, cities)
+
+    // cities = join(cities, data, 'NAME', 'place');
+    // cities = clean(cities);
 
     map.setBounds(bounding);
     map.addTileBasemap('./assets/mt-tiles');
@@ -159,26 +160,47 @@ d3.queue()
 
   });
 
-function updateInfobox(item=null){
+function updateInfobox(items=null){
+
+  function buildTease(story){
+    var link = d3.select(this).append('a')
+      .attr('href', story.link)
+      .attr('target','_blank');
+    link.append('div').attr('class', 'dateline')
+      .html(story.dateline)
+    link.append('div').attr('class','headline').html(story.headline)
+    link.append('div').attr('class','subheadline')
+      .html(story.subhead)
+    link.append('div').attr('class','byline')
+      .html(story.byline + ', ' + story.publication)
+  }
 
   infobox.html('')
-  if (item === null) {
+  if (items === null) {
     infobox.append('div')
       .attr('class', 'default')
       .html('Tap or hover to select story by city')
   }
   else {
-    var props = item.properties;
-    var link = infobox.append('a')
-      .attr('href', props.link)
-      .attr('target','_blank');
-    link.append('div').attr('class', 'dateline')
-      .html(props.dateline)
-    link.append('div').attr('class','headline').html(props.headline)
-    link.append('div').attr('class','subheadline')
-      .html(props.subhead)
-    link.append('div').attr('class','byline')
-      .html(props.byline + ', ' + props.publication)
+    var stories = items.properties.stories;
+    console.log(stories);
+    var links = infobox
+      .selectAll('a')
+      .data(stories).enter()
+        .append('div')
+        .attr('class', 'teasebox')
+        .each(buildTease)
+
+    // var link = infobox.append('a')
+    //   .attr('href', props.link)
+    //   .attr('target','_blank');
+    // link.append('div').attr('class', 'dateline')
+    //   .html(props.dateline)
+    // link.append('div').attr('class','headline').html(props.headline)
+    // link.append('div').attr('class','subheadline')
+    //   .html(props.subhead)
+    // link.append('div').attr('class','byline')
+    //   .html(props.byline + ', ' + props.publication)
   }
 }
 
@@ -254,10 +276,53 @@ function updateInfobox(item=null){
 
 /* Data handling */
 
+function process(data, geodata){
+  // data is array of story objects, keyed to 'place'
+  // geofile is geojson of points, keyed to 'NAME'
+  // this nests data (to account for multiple stories from same locale), then performs a left merge
+  var dataKey = 'place'
+  var geoKey = 'NAME'
+
+  var nested = d3.nest()
+    .key(function(d) { return d[dataKey]; })
+    .entries(data)
+
+  var processed = {
+    features: []
+  }
+
+  nested.forEach(function(locale){
+    var match = geodata.features.filter(function(point){
+      return locale.key.toUpperCase() === point.properties[geoKey].toUpperCase()
+    });
+    if (match.length > 0){
+      processed.features.push({
+        geometry: match[0].geometry,
+        properties: {stories: locale.values}
+      })
+    } else {
+      console.log('no match for ' + locale.key)
+    }
+  })
+
+  return processed;
+}
+
 function join(geojson, data, geoKey, dataKey){
   var included = {
     features: []
   }
+
+  // data.forEach(function(story){
+  //   var match = geojson.features.filter(function(point){
+  //     return story[dataKey].toUpperCase() === point.properties[geoKey].toUpperCase();
+  //   })
+  //   if (match.length > 0) {
+  //     included.features.push(match[0])
+  //   } else {
+  //     console.log('No match for', story);
+  //   }
+  // });
 
   geojson.features.forEach(function(feature){
     var key = feature.properties[geoKey].toUpperCase()
@@ -269,6 +334,8 @@ function join(geojson, data, geoKey, dataKey){
       included.features.push(feature)
     }
   });
+  console.log('Matches found for ' + included.features.length + ' of ' + data.length + 'stories')
+  console.log(included)
   return included;
 }
 

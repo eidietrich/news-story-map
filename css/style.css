@@ -20,10 +20,13 @@ body {
   fill-opacity: 0.4;
   stroke-width:  2;
 
+  -webkit-backface-visibility: hidden;
   transition: all 300ms ease
 }
 .city.highlight {
   /*fill-opacity: 0.8;*/
+  -webkit-transform: scale(1.5);
+  -ms-transform: scale(1.5);
   transform: scale(1.5);
   fill: #e6ab02;
 
@@ -33,19 +36,24 @@ body {
 .infobox {
   border: solid 1px #444;
   margin-top: 5px;
-  padding: 10px;
-  min-height: 150px;
   background-color: #fff;
   text-align: center;
+  height: 200px;
+  overflow: scroll;
 }
-.infobox:hover {
-  background-color: #eee;
-}
-.infobox a {
-  text-decoration: none;
-  color: #111;
+.teasebox {
   cursor: pointer;
   width: 100%;
+  padding-bottom: 10px;
+  padding-top: 10px;
+  border-bottom: 1px solid #ddd;
+}
+.teasebox:hover {
+  background-color: #eee;
+}
+.teasebox a {
+  text-decoration: none;
+  color: #111;
 }
 
 .infobox .dateline {
