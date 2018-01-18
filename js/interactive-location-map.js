@@ -114,6 +114,8 @@ Map.prototype.addTileBasemap = function(tileDirPath){
 var maxWidth = 500;
 var margin = {top: 10, left: 10, right: 10, bottom: 10};
 
+var markerRadius = 10;
+
 var viz = d3.select('#viz')
 viz.append('div').attr('id','map')
 
@@ -128,13 +130,7 @@ var infobox = viz
 
 var pointListeners = [
   // Add focus event?
-  {event: 'mouseover', handler: function(d){
-    d3.selectAll('.city').classed('highlight', false)
-    d3.select(this).select('.city').classed('highlight', true)
-    updateInfobox(d); }
-  },
-  {event: 'touchstart', handler: function(d){ updateInfobox(d); }},
-  // {event: 'click', handler: function(d){ updateInfobox(); }}
+  {event: 'mouseover', handler: highlightCluster},
 ]
 
 d3.queue()
@@ -155,54 +151,141 @@ d3.queue()
 
     map.setBounds(bounding);
     map.addTileBasemap('./assets/mt-tiles');
-    map.addPointLayer(cities.features, 'city', null, pointListeners)
+    map.addPointLayer(cities.features, 'city', clusterPoint, pointListeners)
     updateInfobox();
 
   });
 
-function updateInfobox(items=null){
 
-  function buildTease(story){
-    var link = d3.select(this).append('a')
-      .attr('href', story.link)
-      .attr('target','_blank');
-    link.append('div').attr('class', 'dateline')
-      .html(story.dateline)
-    link.append('div').attr('class','headline').html(story.headline)
-    link.append('div').attr('class','subheadline')
-      .html(story.subhead)
-    link.append('div').attr('class','byline')
-      .html(story.byline + ', ' + story.publication)
+// map-specific functions
+function clusterPoint(d){
+
+  var cluster = d3.select(this).append('g')
+    .attr('class', 'cluster')
+
+  cluster.append('circle')
+    .attr('class', 'cluster-marker')
+    .attr('cx', 0)
+    .attr('cy', 0)
+    .attr('r', 4)
+
+  cluster.append('g')
+    .attr('class', 'cluster-points')
+    .selectAll('.point')
+    .data(d.properties.stories).enter()
+    .append('circle')
+      .attr('class', 'point')
+      .attr('cx', 0)
+      .attr('cy', 0)
+      .attr('r', markerRadius)
+
+}
+
+function highlightCluster(d){
+  console.log('hiCluster')
+  // clear highlight
+  d3.selectAll('.cluster').classed('highlight', false)
+  d3.selectAll('.point').classed('highlight', false)
+  d3.selectAll('.point').on('mouseover', null)
+  d3.selectAll('.point')
+    .attr('transform', 'translate(0,0), rotate(0)')
+
+
+  var cluster = d3.select(this).select('.cluster');
+  var points = cluster.selectAll('.point');
+  // apply highlight styles to cluster
+  cluster.classed('highlight', true)
+  // spread cluster if there's more than one story
+  if(points.size() > 1){
+  points
+    .attr('transform', function(d, i){
+      var n = points.size()
+      var spreadAngle = 360 / n;
+      var spreadDist = 2 * markerRadius + 2;
+      var spreadRadius = spreadDist / (2 * Math.sin(Math.PI / n));
+      return 'rotate(' + (180 + i * spreadAngle) + '), translate(0,' + spreadRadius + ')';
+    });
   }
 
+  // add point-specific event listener
+  points.on('mouseover', highlightPoint)
+
+  // highlight first point
+  points.filter(function(d,i){ return i === 0; })
+    .dispatch('mouseover');
+}
+
+function highlightPoint(d){
+  console.log('hiPoint')
+  d3.selectAll('.point').classed('highlight', false)
+
+  d3.select(this).classed('highlight', true)
+  updateInfobox(d);
+  // stop highlightCluster from running agin
+  d3.event.stopPropagation();
+}
+
+function buildTease(story){
+  var link = d3.select(this).append('a')
+    .attr('href', story.link)
+    .attr('target','_blank');
+  link.append('div').attr('class', 'dateline')
+    .html(story.dateline)
+  link.append('div').attr('class','headline').html(story.headline)
+  link.append('div').attr('class','subheadline')
+    .html(story.subhead)
+  link.append('div').attr('class','byline')
+    .html(story.byline + ', ' + story.publication)
+}
+
+function updateInfobox(item=null){
+  // console.log('infobox', item);
   infobox.html('')
-  if (items === null) {
+  if (item === null) {
     infobox.append('div')
       .attr('class', 'default')
       .html('Tap or hover to select story by city')
   }
   else {
-    var stories = items.properties.stories;
-    console.log(stories);
-    var links = infobox
+    infobox
       .selectAll('a')
-      .data(stories).enter()
+      .data([item]).enter()
         .append('div')
         .attr('class', 'teasebox')
         .each(buildTease)
-
-    // var link = infobox.append('a')
-    //   .attr('href', props.link)
-    //   .attr('target','_blank');
-    // link.append('div').attr('class', 'dateline')
-    //   .html(props.dateline)
-    // link.append('div').attr('class','headline').html(props.headline)
-    // link.append('div').attr('class','subheadline')
-    //   .html(props.subhead)
-    // link.append('div').attr('class','byline')
-    //   .html(props.byline + ', ' + props.publication)
   }
 }
+
+// function updateInfobox(items=null){
+//   // for multiple items in list
+
+//   infobox.html('')
+//   if (items === null) {
+//     infobox.append('div')
+//       .attr('class', 'default')
+//       .html('Tap or hover to select story by city')
+//   }
+//   else {
+//     var stories = items.properties.stories;
+//     var links = infobox
+//       .selectAll('a')
+//       .data(stories).enter()
+//         .append('div')
+//         .attr('class', 'teasebox')
+//         .each(buildTease)
+
+//     // var link = infobox.append('a')
+//     //   .attr('href', props.link)
+//     //   .attr('target','_blank');
+//     // link.append('div').attr('class', 'dateline')
+//     //   .html(props.dateline)
+//     // link.append('div').attr('class','headline').html(props.headline)
+//     // link.append('div').attr('class','subheadline')
+//     //   .html(props.subhead)
+//     // link.append('div').attr('class','byline')
+//     //   .html(props.byline + ', ' + props.publication)
+//   }
+// }
 
 // function addLegends(){
 
@@ -313,17 +396,6 @@ function join(geojson, data, geoKey, dataKey){
     features: []
   }
 
-  // data.forEach(function(story){
-  //   var match = geojson.features.filter(function(point){
-  //     return story[dataKey].toUpperCase() === point.properties[geoKey].toUpperCase();
-  //   })
-  //   if (match.length > 0) {
-  //     included.features.push(match[0])
-  //   } else {
-  //     console.log('No match for', story);
-  //   }
-  // });
-
   geojson.features.forEach(function(feature){
     var key = feature.properties[geoKey].toUpperCase()
     var match = data.filter(function(d){
@@ -334,8 +406,8 @@ function join(geojson, data, geoKey, dataKey){
       included.features.push(feature)
     }
   });
-  console.log('Matches found for ' + included.features.length + ' of ' + data.length + 'stories')
-  console.log(included)
+  // console.log('Matches found for ' + included.features.length + ' of ' + data.length + 'stories')
+  // console.log(included)
   return included;
 }
 

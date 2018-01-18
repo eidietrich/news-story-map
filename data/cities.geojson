@@ -132,7 +132,8 @@
 { "type": "Feature", "properties": { "NAME": "Butte" }, "geometry": { "type": "MultiPoint", "coordinates": [ [ -112.5381559817599, 46.001329924723592 ] ] } },
 { "type": "Feature", "properties": { "NAME": "Anaconda" }, "geometry": { "type": "MultiPoint", "coordinates": [ [ -112.931108837020574, 46.129482362356867 ] ] } },
 { "type": "Feature", "properties": { "NAME": "Seeley Lake" }, "geometry": { "type": "MultiPoint", "coordinates": [ [ -113.480965909520691, 47.183382043919067 ] ] } },
-{ "type": "Feature", "properties": { "NAME": "Ovando" }, "geometry": { "type": "MultiPoint", "coordinates": [ [-113.1313705444336, 47.0187696491611 ] ] } }
-
+{ "type": "Feature", "properties": { "NAME": "Ovando" }, "geometry": { "type": "MultiPoint", "coordinates": [ [-113.1313705444336, 47.0187696491611 ] ] } },
+{ "type": "Feature", "properties": { "NAME": "Dupuyer" }, "geometry": { "type": "MultiPoint", "coordinates": [ [-112.50128746032715,
+          48.19161113912969 ] ] } }
 ]
 }
