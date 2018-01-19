@@ -99,7 +99,9 @@ Map.prototype.addTileBasemap = function(tileDirPath){
       .translate(this.projection([0, 0]))
       .scale(this.projection.scale() * 2 * Math.PI)();
 
-    this.plot.selectAll("image")
+    this.plot.append('g')
+      .attr('classname','basemap')
+      .selectAll("image")
         .data(tiles)
       .enter().append("image")
         .attr("xlink:href", makeTileUrl)
@@ -121,7 +123,7 @@ Map.prototype.addContainer = function(className){
 var maxWidth = 500;
 var margin = {top: 10, left: 10, right: 10, bottom: 10};
 
-var markerRadius = 10;
+var markerRadius = 15;
 
 var viz = d3.select('#viz')
 viz.append('div').attr('id','map')
@@ -137,7 +139,7 @@ var infobox = viz
 
 var pointListeners = [
   // Add focus event?
-  {event: 'mouseover', handler: highlightCluster},
+  {event: 'mouseover', handler: highlightMarker},
 ]
 
 d3.queue()
@@ -153,88 +155,116 @@ d3.queue()
 
     cities = process(data, cities)
 
-    // cities = join(cities, data, 'NAME', 'place');
-    // cities = clean(cities);
-
     map.setBounds(bounding);
     map.addTileBasemap('./assets/mt-tiles');
-    map.addPointLayer(cities.features, 'city', clusterPoint, pointListeners)
-    map.addContainer('cluster-layer')
+    map.addPointLayer(cities.features, 'city', buildMarker, pointListeners)
+    map.addContainer('tooltip')
+
     updateInfobox();
 
   });
 
 
 // map-specific functions
-function clusterPoint(d){
+function buildMarker(d){
 
-  var cluster = d3.select(this).append('g')
-    .attr('class', 'cluster')
+  var marker = d3.select(this).append('g')
+    .attr('class', 'map-marker')
 
-  cluster.append('circle')
-    .attr('class', 'cluster-shadow')
+  marker.append('circle')
+    .attr('class', 'shadow')
     .attr('cx', 1)
     .attr('cy', 1)
-    .attr('r', 5)
-
-  // cluster.append('g')
-  //   .attr('class', 'cluster-points')
-  //   .selectAll('.point')
-  //   .data(d.properties.stories).enter()
-  //   .append('circle')
-  //   .attr('class', 'point')
-  //     .attr('cx', 0)
-  //     .attr('cy', 0)
-  //     .attr('r', markerRadius)
-
-  cluster.append('circle')
-    .attr('class', 'cluster-marker')
+    .attr('r', 13)
+  marker.append('circle')
+    .attr('class', 'marker-icon')
     .attr('cx', 0)
     .attr('cy', 0)
-    .attr('r', 4)
-
+    .attr('r', 12)
 }
 
-function highlightCluster(d){
-  console.log(d);
+function highlightMarker(d){
+  console.log('hiMarker')
   // clear highlight
-  d3.select('.cluster-layer').html('')
-
-  d3.selectAll('.cluster').classed('highlight', false)
-  d3.selectAll('.point').classed('highlight', false)
-  d3.selectAll('.point').on('mouseover', null)
-  d3.selectAll('.point')
-    .attr('transform', 'translate(0,0), rotate(0)')
+  d3.select('.tooltip').html('')
+  d3.selectAll('.map-marker').classed('highlight',false)
   d3.selectAll('cluster-points').html('')
 
+  var enterTransition = d3.transition()
+    .duration(200);
 
-  var points = cluster.selectAll('.point');
-  // apply highlight styles to cluster
-  cluster.classed('highlight', true)
-  // spread cluster if there's more than one story
-  if(points.size() > 1){
-  points
-    .attr('transform', function(d, i){
-      var n = points.size()
-      var spreadAngle = 360 / n;
-      var spreadDist = 2 * markerRadius + 2;
-      var spreadRadius = spreadDist / (2 * Math.sin(Math.PI / n));
-      return 'rotate(' + (180 + i * spreadAngle) + '), translate(0,' + spreadRadius + ')';
+  var tooltip = d3.select('.tooltip')
+    .attr('transform', function(){
+      var xy = map.projection(d.geometry.coordinates[0])
+      return 'translate(' + xy + ')';
     });
-  }
+  var cluster = tooltip.append('g')
+    .attr('class', 'cluster')
+  var data = d.properties.stories.reverse(); // to control render order
+  var points = cluster.selectAll('.point')
+      .data(data).enter()
+      .append('g')
+
+  // cluster geometry calcs
+  var n = points.size()
+  var spreadDist = 2 * markerRadius + 4;
+  // // for radial spread
+  // var spreadAngle = 360 / n;
+  // var spreadRadius = spreadDist / (2 * Math.sin(Math.PI / n));
+
+  // move points groups
+  points
+  .transition(enterTransition)
+  // // ALT DISPLAY - radial spread
+  // .attr('transform', function(d, i){
+  //   if (n <= 1) return 'rotate(180)';
+  //   else return 'rotate(' + (180 + i * spreadAngle) + '), translate(0,' + spreadRadius + ')';
+  // });
+  .attr('transform', function(d, i){
+    var j = (n - i - 1) // to control render order
+    return 'translate(0,' + (j * spreadDist) + ')';
+  });
+
+  // draw points elements
+  points
+    .append('circle')
+    .attr('class', 'shadow')
+      // for radial spread
+      // .attr('transform', function(d,i){
+      //   return 'rotate(' + (180 - i * spreadAngle) + ')';
+      // })
+      .attr('cx', 1)
+      .attr('cy', 1)
+      .attr('r', markerRadius + 1);
+  points
+    .append('circle')
+    .attr('class', 'point')
+      .attr('cx', 0)
+      .attr('cy', 0)
+      .attr('r', markerRadius);
+
+  // draw icon on top of points
+  cluster
+    .append('circle')
+    .attr('class', 'marker-icon-on-top')
+      .attr('cx', 0)
+      .attr('cy', 0)
+      .attr('r', markerRadius);
+
+
+  // apply highlight class
+  d3.select(this).select('.map-marker').classed('highlight', true)
 
   // add point-specific event listener
   points.on('mouseover', highlightPoint)
-
   // highlight first point
-  points.filter(function(d,i){ return i === 0; })
+  points.filter(function(d,i){ return i === (n-1); })
     .dispatch('mouseover');
 }
 
 function highlightPoint(d){
   d3.selectAll('.point').classed('highlight', false)
-
-  d3.select(this).classed('highlight', true)
+  d3.select(this).select('.point').classed('highlight', true)
   updateInfobox(d);
   // stop highlightCluster from running agin
   d3.event.stopPropagation();
@@ -271,106 +301,6 @@ function updateInfobox(item=null){
   }
 }
 
-// function updateInfobox(items=null){
-//   // for multiple items in list
-
-//   infobox.html('')
-//   if (items === null) {
-//     infobox.append('div')
-//       .attr('class', 'default')
-//       .html('Tap or hover to select story by city')
-//   }
-//   else {
-//     var stories = items.properties.stories;
-//     var links = infobox
-//       .selectAll('a')
-//       .data(stories).enter()
-//         .append('div')
-//         .attr('class', 'teasebox')
-//         .each(buildTease)
-
-//     // var link = infobox.append('a')
-//     //   .attr('href', props.link)
-//     //   .attr('target','_blank');
-//     // link.append('div').attr('class', 'dateline')
-//     //   .html(props.dateline)
-//     // link.append('div').attr('class','headline').html(props.headline)
-//     // link.append('div').attr('class','subheadline')
-//     //   .html(props.subhead)
-//     // link.append('div').attr('class','byline')
-//     //   .html(props.byline + ', ' + props.publication)
-//   }
-// }
-
-// function addLegends(){
-
-//   var colorLegend = d3.legendColor()
-//     .scale(colorScale)
-//     .shapeWidth(30)
-//     .orient('horizontal')
-//     .labelFormat(d3.format(""))
-//     .cells(censusYears)
-//     .title('Decade of peak census count')
-
-//   var sizeLegend = d3.legendSize()
-//     .scale(rScale)
-//     .shape('circle')
-//     .orient('vertical')
-//     .shapePadding(20)
-//     .cells([1000, 10000, 50000])
-//     .labelFormat(d3.format(","))
-//     .title('Peak population')
-
-//   svg.append('g')
-//     .attr('class', 'legendLinear')
-//     .attr('transform', 'translate(10,350)')
-//     .call(colorLegend)
-
-//   svg.append('g')
-//     .attr('class', 'legendSize')
-//     .attr('transform', 'translate(10,220)')
-//     .call(sizeLegend)
-// }
-// function addAnnotations(){
-//   annotations = [{"x":314,"y":276,"dx":31,"dy":42,"note":{"title":"Bozeman","label":""}},{"x":247,"y":77,"dx":-13,"dy":-24,"note":{"title":"Cut Bank","label":""}},{"x":567,"y":257,"dx":-11,"dy":61,"note":{"title":"Ekalaka","label":""}},{"x":223,"y":259,"dx":-73,"dy":33,"note":{"title":"Butte","label":""}},{"x":261,"y":286,"dx":-84,"dy":30,"note":{"title":"Virginia City","label":""}},{"x":303,"y":131,"dx":25,"dy":-79,"note":{"title":"Great Falls","label":""}},{"x":481,"y":259,"dx":-11,"dy":57,"note":{"title":"Colstrip","label":""}}];
-
-//   makeAnnotations = d3.annotation()
-//     .editMode(false)
-//     .type(d3.annotationLabel)
-//     .annotations(annotations)
-
-//   svg.append('g')
-//     .attr('class', 'annotation-group')
-//     .call(makeAnnotations)
-// }
-
-// function calcRate(begin, end, n){
-//   return Math.pow((end / begin), 1 / n) - 1;
-// }
-
-// var annotations, makeAnnotations;
-
-// var colors = {
-//   '2010': '#66a61e',
-//   '2000': '#e7298a', '1990': '#e7298a', '1980': '#e7298a',
-//   '1970': '#d95f0e', '1960': '#d95f0e', '1950': '#d95f0e',
-//   '1940': '#e6ab02', '1930': '#e6ab02', '1920': '#e6ab02',
-//   '1910': '#a6761d', '1900': '#a6761d', '1890': '#a6761d'
-// }
-
-// var censusYears = ['2010', '2000', '1990', '1980', '1970', '1960', '1950', '1940', '1930', '1920', '1910', '1900', '1890']
-// var scaleYears = ['2010', '2000', '1970', '1950', '1910', '1890']
-// // var colors = ['#1d91c0',
-// // '#8c2d04','#973b0a','#a14a10','#ab5717','#b6641e','#c07224','#cb7f2b','#d58c32','#df9b39','#eaa840','#f4b647','#fec44f'];
-// var colors = ['#1d91c0',
-// '#78c679','#ffc418','#ff8200','#f8171c','#a52a2a'];
-
-// var rScale = d3.scaleSqrt()
-//   .range([0, 20]);
-
-// var colorScale = d3.scaleLinear()
-//   .range(colors)
-//   .domain(scaleYears)
 
 /* Data handling */
 
@@ -406,60 +336,22 @@ function process(data, geodata){
   return processed;
 }
 
-function join(geojson, data, geoKey, dataKey){
-  var included = {
-    features: []
-  }
+// function join(geojson, data, geoKey, dataKey){
+//   var included = {
+//     features: []
+//   }
 
-  geojson.features.forEach(function(feature){
-    var key = feature.properties[geoKey].toUpperCase()
-    var match = data.filter(function(d){
-      return d[dataKey] === key;
-    })[0];
-    if (match) {
-      feature.properties = match;
-      included.features.push(feature)
-    }
-  });
-  // console.log('Matches found for ' + included.features.length + ' of ' + data.length + 'stories')
-  // console.log(included)
-  return included;
-}
-
-function clean(geojson){
-
-  // geojson.features.forEach(function(feature){
-  //   // // filter
-  //   // var props = feature.properties;
-  //   // var keep = {
-  //   //   name: props["NAME"],
-  //   //   pop_2010: props['respop72010'],
-  //   //   pop_2014: props['respop72014'],
-  //   //   pop_2015: props['respop72015']
-  //   // }
-  //   // feature.properties = keep;
-
-  //   // process
-  //   var props = feature.properties;
-  //   var maxPop = 0, maxYear = null;
-  //   censusYears.forEach(function(cenYear){
-  //     var key = 'cen_' + cenYear;
-  //     props[key] = +props[key];
-  //     var pop = props[key];
-  //     if (pop > maxPop) {
-  //       maxPop = pop;
-  //       maxYear = cenYear;
-  //     }
-  //   })
-  //   props.maxPop = maxPop;
-  //   props.maxYear = maxYear;
-  //   props.fractionOfPeak = props.cen_2010 / maxPop;
-  // });
-
-  // // Sort descending by size so small ones draw on top of big ones
-  // geojson.features.sort(function(a,b){
-  //   return b.properties['cen_2010'] - a.properties['cen_2010'];
-  // });
-
-  return geojson;
-}
+//   geojson.features.forEach(function(feature){
+//     var key = feature.properties[geoKey].toUpperCase()
+//     var match = data.filter(function(d){
+//       return d[dataKey] === key;
+//     })[0];
+//     if (match) {
+//       feature.properties = match;
+//       included.features.push(feature)
+//     }
+//   });
+//   // console.log('Matches found for ' + included.features.length + ' of ' + data.length + 'stories')
+//   // console.log(included)
+//   return included;
+// }

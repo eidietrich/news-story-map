@@ -4,100 +4,73 @@ body {
 
 #viz-container {
   margin: auto;
-  width: 100vw;
+  width: 95vw;
   max-width: 600px;
   padding-left: 0px;
   padding-right: 0px;
 }
+
+/* MAP */
+
 #map {
   border: 1px solid #444;
   text-align: center;
-}
-
-/*.city {
-  opacity: 0.9;
-  fill: #2b8cbe;
-  stroke: #2b8cbe;
-  fill-opacity: 0.4;
-  stroke-width:  2;
-  stroke-opacity:;
-
-  -webkit-backface-visibility: hidden;
-  transition: all 300ms ease
-}*/
-
-.cluster {
-   -webkit-transition: transform 300ms ease;
-  transition: transform 300ms ease;
-}
-
-.cluster.highlight {
-  -webkit-transform: scale(2);
-  -ms-transform: scale(2);
-  transform: scale(2);
-
-  -webkit-transition: transform 300ms ease;
-  transition: transform 300ms ease;
-}
-
-.cluster.highlight .point {
-
-}
-
-.cluster.highlight .cluster-marker,
-.cluster.highlight .cluster-shadow {
-  -webkit-transform: scale(0.6);
-  -ms-transform: scale(0.6);
-  transform: scale(0.6);
-
-  -webkit-transition: transform 300ms ease;
-  transition: transform 300ms ease;
+  margin-left: 1px;
+  margin-right: 1px;
 }
 
 .point {
-  fill: #a81d15;
-  fill-opacity: 0.5;
+  fill: #444;
+  fill-opacity: 1;
   stroke: #a81d15;
+  stroke: #fff;
   stroke-width: 1.5px;
   stroke-opacity: 1;
 
   -webkit-transition: fill 200ms ease;
   transition: fill 200ms ease;
 }
-
 .point.highlight {
-  fill: #e6ab02;
+  fill: #a81d15;
+  fill-opacity: 1;
   stroke: black;
   stroke-width: 2px;
 
-  -webkit-transition: fill 200ms ease;
-  transition: fill 200ms ease;
+  -webkit-transition: all 100ms ease;
+  transition: all 100ms ease;
 }
 
 
-
-
-
-
-.city.highlight {
-  /*fill-opacity: 0.8;*/
-}
-
-.cluster-marker {
+.marker-icon {
   stroke-width: 2px;
   /*stroke: #a81d15;*/
   stroke: #fff;
-  fill: #7a1c17;
+  fill: #e6ab02;
   fill-opacity: 1;
 }
-.cluster-shadow {
+.shadow {
   stroke: none;
   fill: #333;
   fill-opacity: 0.5;
 }
+/*.map-marker.highlight {
+  transform: scale(0.4);
+  pointer-events: none;
+}
+.map-marker.highlight .marker-icon {
+  stroke: none;
+}*/
+
+.marker-icon-on-top {
+  fill: #e6ab02;
+  fill-opacity: 1;
+  transform: scale(0.4);
+}
+
+
+/* INFOBOX */
 
 .infobox {
-  /*border: solid 1px #444*/;
   border: none;
   margin-top: 5px;
   background-color: #fff;
