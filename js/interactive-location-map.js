@@ -108,6 +108,13 @@ Map.prototype.addTileBasemap = function(tileDirPath){
         .attr("width", tiles.scale)
         .attr("height", tiles.scale);
 };
+Map.prototype.addContainer = function(className){
+  // adds container (e.g. for tooltip)
+  console.log('adding container', className);
+
+  this.plot.append('g')
+    .attr('class', className)
+}
 
 
 /* Graphic code */
@@ -152,6 +159,7 @@ d3.queue()
     map.setBounds(bounding);
     map.addTileBasemap('./assets/mt-tiles');
     map.addPointLayer(cities.features, 'city', clusterPoint, pointListeners)
+    map.addContainer('cluster-layer')
     updateInfobox();
 
   });
@@ -164,34 +172,42 @@ function clusterPoint(d){
     .attr('class', 'cluster')
 
   cluster.append('circle')
+    .attr('class', 'cluster-shadow')
+    .attr('cx', 1)
+    .attr('cy', 1)
+    .attr('r', 5)
+
+  // cluster.append('g')
+  //   .attr('class', 'cluster-points')
+  //   .selectAll('.point')
+  //   .data(d.properties.stories).enter()
+  //   .append('circle')
+  //   .attr('class', 'point')
+  //     .attr('cx', 0)
+  //     .attr('cy', 0)
+  //     .attr('r', markerRadius)
+
+  cluster.append('circle')
     .attr('class', 'cluster-marker')
     .attr('cx', 0)
     .attr('cy', 0)
     .attr('r', 4)
 
-  cluster.append('g')
-    .attr('class', 'cluster-points')
-    .selectAll('.point')
-    .data(d.properties.stories).enter()
-    .append('circle')
-      .attr('class', 'point')
-      .attr('cx', 0)
-      .attr('cy', 0)
-      .attr('r', markerRadius)
-
 }
 
 function highlightCluster(d){
-  console.log('hiCluster')
+  console.log(d);
   // clear highlight
+  d3.select('.cluster-layer').html('')
+
   d3.selectAll('.cluster').classed('highlight', false)
   d3.selectAll('.point').classed('highlight', false)
   d3.selectAll('.point').on('mouseover', null)
   d3.selectAll('.point')
     .attr('transform', 'translate(0,0), rotate(0)')
+  d3.selectAll('cluster-points').html('')
 
 
-  var cluster = d3.select(this).select('.cluster');
   var points = cluster.selectAll('.point');
   // apply highlight styles to cluster
   cluster.classed('highlight', true)
@@ -216,7 +232,6 @@ function highlightCluster(d){
 }
 
 function highlightPoint(d){
-  console.log('hiPoint')
   d3.selectAll('.point').classed('highlight', false)
 
   d3.select(this).classed('highlight', true)
