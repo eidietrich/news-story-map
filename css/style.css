@@ -83,8 +83,8 @@ body {
   cursor: pointer;
   padding-bottom: 10px;
   padding-top: 10px;
-  padding-left: 5px;
-  padding-right: 5px;
+  padding-left: 10px;
+  padding-right: 10px;
   /*border-bottom: 1px solid #ddd;*/
 }
 .teasebox:hover {
