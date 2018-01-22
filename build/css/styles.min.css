@@ -1,8 +1,6 @@
-body {
-  font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
-}
 
 #viz-container {
+  font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
   margin: auto;
   width: 95vw;
   max-width: 600px;
@@ -12,14 +10,14 @@ body {
 
 /* MAP */
 
-#map {
+#viz-container #map {
   border: 1px solid #444;
   text-align: center;
   margin-left: 1px;
   margin-right: 1px;
 }
 
-.point {
+#viz-container .point {
   fill: #444;
   fill-opacity: 1;
   stroke: #a81d15;
@@ -28,7 +26,7 @@ body {
   stroke-opacity: 1;
   transition: fill 200ms ease;
 }
-.point.highlight {
+#viz-container .point.highlight {
   fill: #a81d15;
   fill-opacity: 1;
   stroke: black;
@@ -36,28 +34,20 @@ body {
   transition: all 100ms ease;
 }
 
-
-.marker-icon {
+#viz-container .marker-icon {
   stroke-width: 2px;
   /*stroke: #a81d15;*/
   stroke: #fff;
   fill: #e6ab02;
   fill-opacity: 1;
 }
-.shadow {
+#viz-container .shadow {
   stroke: none;
   fill: #333;
   fill-opacity: 0.5;
 }
-/*.map-marker.highlight {
-  transform: scale(0.4);
-  pointer-events: none;
-}
-.map-marker.highlight .marker-icon {
-  stroke: none;
-}*/
 
-.marker-icon-on-top {
+#viz-container  .marker-icon-on-top {
   fill: #e6ab02;
   fill-opacity: 1;
   transform: scale(0.4);
@@ -66,7 +56,7 @@ body {
 
 /* INFOBOX */
 
-.infobox {
+#viz-container .infobox {
   border: none;
   margin-top: 5px;
   background-color: #fff;
@@ -74,7 +64,7 @@ body {
   height: 250px;
   /*overflow: scroll;*/
 }
-.teasebox {
+#viz-container .teasebox {
   border: solid 1px #444;
   cursor: pointer;
   padding-bottom: 10px;
@@ -83,42 +73,41 @@ body {
   padding-right: 10px;
   /*border-bottom: 1px solid #ddd;*/
 }
-.teasebox:hover {
+#viz-container .teasebox:hover {
   background-color: #eee;
 }
-.teasebox a {
+#viz-container .teasebox a {
   text-decoration: none;
   color: #111;
 }
 
-.infobox .dateline {
+#viz-container .infobox .dateline {
   text-transform: uppercase;
 }
 
-.infobox .headline {
+#viz-container .infobox .headline {
   font-size: 1.5em;
   line-height: 1.2em;
   font-weight: bold;
   font-family: 'Open Sans','Helvetica Neue',Helvetica,Arial,sans-serif;
   color: #a81d15;
   margin-bottom: 5px;
-
 }
 
-.infobox .subheadline {
+#viz-container .infobox .subheadline {
   font-size: 1.0em;
   line-height: 1em;
   font-style: italic;
   margin-bottom: 10px;
 
 }
-.infobox .default {
+#viz-container .infobox .default {
   font-size: 1em;
   /*line-height: 1.2em;*/
   font-style: italic;
 }
 
-.infobox .byline {
+#viz-container .infobox .byline {
   font-weight: none;
   color: #666;
 }

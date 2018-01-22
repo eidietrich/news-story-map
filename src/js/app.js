@@ -28,12 +28,12 @@ function Map(anchor, width=400, height=400, margin) {
   this.projection = d3.geoMercator()
 }
 Map.prototype.setBounds = function(bounding){
-  console.log('setting bounds')
+  // console.log('setting bounds')
   if (bounding) { this.boundingObject = bounding; }// Geojson
   this.projection.fitSize([this.plotWidth, this.plotHeight], this.boundingObject);
 }
 Map.prototype.addShapeLayer = function(features, className='shape'){
-  console.log('shape layer', features)
+  // console.log('shape layer', features)
   var shapeFunction = d3.geoPath()
     .projection(this.projection);
 
@@ -47,7 +47,7 @@ Map.prototype.addShapeLayer = function(features, className='shape'){
     .attr('class', className)
 };
 Map.prototype.addPointLayer = function(features, className='point', pointFunction, listeners){
-  console.log('point layer', features);
+  // console.log('point layer', features);
 
   function defaultPoint(d){
     d3.select(this).append('circle')
@@ -84,7 +84,7 @@ Map.prototype.addPointLayer = function(features, className='point', pointFunctio
   }
 };
 Map.prototype.addTileBasemap = function(tileDirPath){
-    console.log('drawing base map')
+    // console.log('drawing base map')
 
     function makeTileUrl(d){
       // var url = "http://" + "abc"[d[1] % 3] + ".tile.openstreetmap.org/" + d[2] + "/" + d[0] + "/" + d[1] + ".png";
@@ -111,7 +111,7 @@ Map.prototype.addTileBasemap = function(tileDirPath){
 };
 Map.prototype.addContainer = function(className){
   // adds container (e.g. for tooltip)
-  console.log('adding container', className);
+  // console.log('adding container', className);
 
   this.plot.append('g')
     .attr('class', className)
@@ -183,7 +183,6 @@ function buildMarker(d){
 }
 
 function highlightMarker(d){
-  console.log('hiMarker')
   // clear highlight
   d3.select('.tooltip').html('')
   d3.selectAll('.map-marker').classed('highlight',false)
@@ -288,7 +287,7 @@ function updateInfobox(item=null){
   if (item === null) {
     infobox.append('div')
       .attr('class', 'default')
-      .html('Tap or hover to select story by city')
+      .html('Tap or hover to select stories by town')
   }
   else {
     infobox
@@ -334,23 +333,3 @@ function process(data, geodata){
 
   return processed;
 }
-
-// function join(geojson, data, geoKey, dataKey){
-//   var included = {
-//     features: []
-//   }
-
-//   geojson.features.forEach(function(feature){
-//     var key = feature.properties[geoKey].toUpperCase()
-//     var match = data.filter(function(d){
-//       return d[dataKey] === key;
-//     })[0];
-//     if (match) {
-//       feature.properties = match;
-//       included.features.push(feature)
-//     }
-//   });
-//   // console.log('Matches found for ' + included.features.length + ' of ' + data.length + 'stories')
-//   // console.log(included)
-//   return included;
-// }
